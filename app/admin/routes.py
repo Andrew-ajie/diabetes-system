@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from app.admin import admin_bp
 from app.decorators import admin_required
-from app.models import User, Patient, GlucoseRecord
+from app.models import User, Patient, GlucoseRecord, ExerciseRecord, Reminder
 from app import db
 from config import Config
 
@@ -136,6 +136,24 @@ def patients():
     pagination = query.order_by(Patient.created_at.desc()).paginate(page=page, per_page=20, error_out=False)
     doctors = User.query.filter_by(role='doctor').order_by(User.name).all()
     return render_template('admin/patients.html', pagination=pagination, doctors=doctors, search=search)
+
+
+@admin_bp.route('/patients/<int:patient_id>/delete', methods=['POST'])
+@admin_required
+def delete_patient(patient_id):
+    patient = Patient.query.get_or_404(patient_id)
+    name = patient.name
+    try:
+        GlucoseRecord.query.filter_by(patient_id=patient_id).delete()
+        ExerciseRecord.query.filter_by(patient_id=patient_id).delete()
+        Reminder.query.filter_by(patient_id=patient_id).delete()
+        db.session.delete(patient)
+        db.session.commit()
+        flash(f'患者 {name} 及其关联记录已删除。', 'success')
+    except Exception:
+        db.session.rollback()
+        flash('删除失败，请稍后重试。', 'danger')
+    return redirect(url_for('admin.patients'))
 
 
 @admin_bp.route('/patients/<int:patient_id>/edit', methods=['GET', 'POST'])
