@@ -241,8 +241,8 @@
 document.addEventListener('DOMContentLoaded', function () {
     // Set default datetime to now
     const now = new Date();
-    const pad = n => String(n).padStart(2, '0');
-    const localIso = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const padWithZero = n => String(n).padStart(2, '0');
+    const localIso = `${now.getFullYear()}-${padWithZero(now.getMonth()+1)}-${padWithZero(now.getDate())}T${padWithZero(now.getHours())}:${padWithZero(now.getMinutes())}`;
     document.querySelectorAll('input[type="datetime-local"]').forEach(el => el.value = localIso);
 
     // Fetch glucose chart data
@@ -269,13 +269,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 options: {
                     responsive: true,
                     plugins: {
-                        legend: { display: true },
-                        annotation: {}
+                        legend: { display: true }
                     },
                     scales: {
                         y: {
                             title: { display: true, text: 'mmol/L' },
-                            min: 2,
+                            min: Math.max(0, (data.glucose_low || 3.9) - 1),
                             suggestedMax: 15
                         }
                     }
