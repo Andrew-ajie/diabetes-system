@@ -89,8 +89,8 @@ def patient_detail(patient_id):
                 exercise_type = request.form.get('exercise_type', '').strip()
                 duration_raw = request.form.get('duration', '').strip()
                 calories_raw = request.form.get('calories', '').strip()
-                duration = int(duration_raw) if duration_raw else 0
-                calories = int(calories_raw) if calories_raw else 0
+                duration = int(duration_raw) if duration_raw else None
+                calories = int(calories_raw) if calories_raw else None
                 intensity = request.form.get('intensity')
                 record_time_str = request.form.get('record_time')
                 record_time = datetime.strptime(record_time_str, '%Y-%m-%dT%H:%M')
