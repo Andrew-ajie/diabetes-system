@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from flask import render_template, request, redirect, url_for, flash, jsonify
+from flask import render_template, request, redirect, url_for, flash, jsonify, current_app
 from app.admin import admin_bp
 from app.decorators import admin_required
 from app.models import User, Patient, GlucoseRecord, ExerciseRecord, Reminder
@@ -152,6 +152,7 @@ def delete_patient(patient_id):
         flash(f'患者 {name} 及其关联记录已删除。', 'success')
     except Exception:
         db.session.rollback()
+        current_app.logger.exception('删除患者 %s 时发生错误', patient_id)
         flash('删除失败，请稍后重试。', 'danger')
     return redirect(url_for('admin.patients'))
 
