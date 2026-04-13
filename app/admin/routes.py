@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from flask import render_template, request, redirect, url_for, flash, jsonify, current_app
 from app.admin import admin_bp
 from app.decorators import admin_required
-from app.models import User, Patient, GlucoseRecord, ExerciseRecord, Reminder
+from app.models import User, Patient, GlucoseRecord, ExerciseRecord, Reminder, Consultation, FamilyMember
 from app import db
 from config import Config
 
@@ -147,6 +147,8 @@ def delete_patient(patient_id):
         GlucoseRecord.query.filter_by(patient_id=patient_id).delete()
         ExerciseRecord.query.filter_by(patient_id=patient_id).delete()
         Reminder.query.filter_by(patient_id=patient_id).delete()
+        Consultation.query.filter_by(patient_id=patient_id).delete()
+        FamilyMember.query.filter_by(patient_id=patient_id).delete()
         db.session.delete(patient)
         db.session.commit()
         flash(f'患者 {name} 及其关联记录已删除。', 'success')

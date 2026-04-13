@@ -81,7 +81,7 @@
                    href="{{ url_for('doctor.reminders') }}">
                     <i class="bi bi-bell"></i>提醒管理
                 </a>
-                <a class="nav-link {% if 'doctor.consultation' in request.endpoint %}active{% endif %}"
+                <a class="nav-link {% if request.endpoint in ('doctor.consultations', 'doctor.consultation_reply') %}active{% endif %}"
                    href="{{ url_for('doctor.consultations') }}">
                     <i class="bi bi-chat-dots"></i>患者咨询
                 </a>
