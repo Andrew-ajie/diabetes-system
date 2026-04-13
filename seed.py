@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 sys.path.insert(0, os.path.dirname(__file__))
 
 from app import create_app, db
-from app.models import User, Patient, GlucoseRecord, ExerciseRecord, Reminder
+from app.models import User, Patient, GlucoseRecord, ExerciseRecord, Reminder, Consultation, FamilyMember
 
 app = create_app()
 
@@ -95,6 +95,7 @@ def seed():
                 doctor_id=doctor.id,
                 created_at=datetime.utcnow() - timedelta(days=random.randint(30, 365))
             )
+            patient.set_password('123456')
             db.session.add(patient)
             patients.append(patient)
 
@@ -166,10 +167,64 @@ def seed():
         db.session.bulk_save_objects(reminder_batch)
         print(f'Created {len(reminder_batch)} reminders.')
 
+        # Consultations – a few sample exchanges per patient
+        PATIENT_MESSAGES = [
+            '医生，我最近血糖总是偏高，是不是需要调整药量？',
+            '我前几天有些头晕，是低血糖的症状吗？',
+            '请问我可以吃西瓜吗？听说含糖量高。',
+            '我坚持步行锻炼，但血糖改善不明显，有什么建议？',
+        ]
+        DOCTOR_REPLIES = [
+            '您好，建议您严格控制碳水化合物摄入，同时按时服药，下次复诊时我们详细讨论方案。',
+            '头晕可能与低血糖有关，建议随身携带糖果，出现症状立即补充。',
+            '西瓜含糖较高，建议少量食用，注意监测餐后血糖。',
+            '运动很好！建议增加运动频率，每周5次以上，同时注意饮食控制。',
+        ]
+        consultation_batch = []
+        for i, patient in enumerate(patients[:5]):
+            doctor = doctors[i % len(doctors)]
+            for j in range(random.randint(1, 2)):
+                t = datetime.utcnow() - timedelta(days=random.randint(1, 14), hours=random.randint(0, 8))
+                consultation_batch.append(Consultation(
+                    patient_id=patient.id,
+                    doctor_id=doctor.id,
+                    sender='patient',
+                    content=PATIENT_MESSAGES[j % len(PATIENT_MESSAGES)],
+                    created_at=t
+                ))
+                consultation_batch.append(Consultation(
+                    patient_id=patient.id,
+                    doctor_id=doctor.id,
+                    sender='doctor',
+                    content=DOCTOR_REPLIES[j % len(DOCTOR_REPLIES)],
+                    created_at=t + timedelta(hours=1)
+                ))
+
+        db.session.bulk_save_objects(consultation_batch)
+        print(f'Created {len(consultation_batch)} consultation messages.')
+
+        # Family members – 1-2 per patient for first 5 patients
+        RELATIONS = ['配偶', '儿子', '女儿', '母亲', '父亲']
+        FAMILY_NAMES = ['张伟', '李芳', '王明', '刘娜', '陈磊', '赵静', '孙辉', '周丽', '吴强', '郑敏']
+        family_batch = []
+        for i, patient in enumerate(patients[:8]):
+            for j in range(random.randint(1, 2)):
+                family_batch.append(FamilyMember(
+                    patient_id=patient.id,
+                    name=FAMILY_NAMES[(i + j) % len(FAMILY_NAMES)],
+                    relation=RELATIONS[(i + j) % len(RELATIONS)],
+                    phone=f'139{random.randint(10000000, 99999999)}'
+                ))
+
+        db.session.bulk_save_objects(family_batch)
+        print(f'Created {len(family_batch)} family members.')
+
         db.session.commit()
         print('\n✅ Seed completed successfully!')
         print('   Admin:   admin@123.com / 123456')
         print('   Doctors: Doctor1@123.com ~ Doctor10@123.com / 123456')
+        print('   Patients: use phone number + password 123456 to login at /patient/login')
+        print('   (Run the app and check /admin/patients to find a patient\'s phone number)')
 
 
 if __name__ == '__main__':

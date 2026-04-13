@@ -31,6 +31,7 @@ class Patient(db.Model):
     address = db.Column(db.String(200))
     diabetes_type = db.Column(db.String(50))
     doctor_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    password_hash = db.Column(db.String(256))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     doctor = db.relationship('User', backref='patients')
@@ -42,6 +43,14 @@ class Patient(db.Model):
         'ExerciseRecord', backref='patient', lazy='dynamic',
         order_by='ExerciseRecord.record_time.desc()'
     )
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        if not self.password_hash:
+            return False
+        return check_password_hash(self.password_hash, password)
 
 
 class GlucoseRecord(db.Model):
@@ -82,3 +91,30 @@ class Reminder(db.Model):
 
     doctor = db.relationship('User', backref='reminders')
     patient = db.relationship('Patient', backref='reminders')
+
+
+class Consultation(db.Model):
+    __tablename__ = 'consultations'
+
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey('patients.id'), nullable=False)
+    doctor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    sender = db.Column(db.Enum('patient', 'doctor'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    patient = db.relationship('Patient', backref='consultations')
+    doctor = db.relationship('User', backref='consultations')
+
+
+class FamilyMember(db.Model):
+    __tablename__ = 'family_members'
+
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey('patients.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    relation = db.Column(db.String(50))
+    phone = db.Column(db.String(20))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    patient = db.relationship('Patient', backref='family_members')

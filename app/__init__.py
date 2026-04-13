@@ -16,10 +16,12 @@ def create_app():
     from app.auth import auth_bp
     from app.doctor import doctor_bp
     from app.admin import admin_bp
+    from app.patient import patient_bp
 
     app.register_blueprint(auth_bp, url_prefix='')
     app.register_blueprint(doctor_bp, url_prefix='/doctor')
     app.register_blueprint(admin_bp, url_prefix='/admin')
+    app.register_blueprint(patient_bp, url_prefix='/patient')
 
     @app.route('/')
     def index():
