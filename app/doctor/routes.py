@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from flask import render_template, request, redirect, url_for, session, flash, jsonify, abort
 from app.doctor import doctor_bp
 from app.decorators import doctor_required
-from app.models import Patient, GlucoseRecord, ExerciseRecord, Reminder, User
+from app.models import Patient, GlucoseRecord, ExerciseRecord, Reminder, User, Consultation
 from app import db
 from config import Config
 
@@ -182,3 +182,48 @@ def reminders():
         .paginate(page=page, per_page=20, error_out=False)
     )
     return render_template('doctor/reminders.html', pagination=pagination, patients=doctor_patients)
+
+
+@doctor_bp.route('/consultations')
+@doctor_required
+def consultations():
+    doctor_id = session['user_id']
+    doctor_patients = Patient.query.filter_by(doctor_id=doctor_id).order_by(Patient.name).all()
+    selected_patient_id = request.args.get('patient_id', type=int)
+    selected_patient = None
+    messages = []
+    if selected_patient_id:
+        selected_patient = Patient.query.filter_by(id=selected_patient_id, doctor_id=doctor_id).first_or_404()
+        messages = (
+            Consultation.query
+            .filter_by(patient_id=selected_patient_id)
+            .order_by(Consultation.created_at.asc())
+            .all()
+        )
+    return render_template(
+        'doctor/consultation.html',
+        doctor_patients=doctor_patients,
+        selected_patient=selected_patient,
+        messages=messages
+    )
+
+
+@doctor_bp.route('/consultations/reply', methods=['POST'])
+@doctor_required
+def consultation_reply():
+    doctor_id = session['user_id']
+    patient_id = request.form.get('patient_id', type=int)
+    content = request.form.get('content', '').strip()
+    patient = Patient.query.filter_by(id=patient_id, doctor_id=doctor_id).first_or_404()
+    if content:
+        db.session.add(Consultation(
+            patient_id=patient_id,
+            doctor_id=doctor_id,
+            sender='doctor',
+            content=content
+        ))
+        db.session.commit()
+        flash('回复已发送。', 'success')
+    else:
+        flash('回复内容不能为空。', 'danger')
+    return redirect(url_for('doctor.consultations', patient_id=patient_id))

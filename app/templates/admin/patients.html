@@ -63,6 +63,14 @@
                            class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-pencil me-1"></i>编辑
                         </a>
+                        <form method="post"
+                              action="{{ url_for('admin.delete_patient', patient_id=patient.id) }}"
+                              class="d-inline"
+                              onsubmit="return confirm('确定要删除患者「{{ patient.name | e }}」及其所有关联记录吗？此操作不可撤销。');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash me-1"></i>删除
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 {% else %}
